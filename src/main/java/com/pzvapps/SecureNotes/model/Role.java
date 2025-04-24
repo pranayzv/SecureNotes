@@ -32,6 +32,7 @@ public class Role{
     @ToString.Exclude
     private Set<User> users = new HashSet<>();
 
+    public   Role (){}
     public Role(AppRole roleName) {
         this.roleName = roleName;
     }
