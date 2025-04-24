@@ -24,6 +24,9 @@ import java.time.LocalDateTime;
                 @UniqueConstraint(columnNames = "email")
         })
 public class User{
+
+    public User(){}
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
