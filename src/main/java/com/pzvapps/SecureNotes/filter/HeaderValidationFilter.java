@@ -9,7 +9,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-@Component
+//@Component
 public class HeaderValidationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -17,6 +17,7 @@ public class HeaderValidationFilter extends OncePerRequestFilter {
             System.out.println("Valid header");
             filterChain.doFilter(request, response);
         }else {
+            System.out.println("Invalid header");
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid X-ref header value");
         }
 

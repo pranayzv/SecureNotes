@@ -1,6 +1,5 @@
 package com.pzvapps.SecureNotes.security;
 
-import com.pzvapps.SecureNotes.filter.CustomLoggingFilter;
 import com.pzvapps.SecureNotes.filter.HeaderValidationFilter;
 import com.pzvapps.SecureNotes.model.AppRole;
 import com.pzvapps.SecureNotes.model.Role;
@@ -19,6 +18,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 import java.time.LocalDate;
 
@@ -37,9 +37,19 @@ public class AppSecurityConfig {
         http.sessionManagement(session  ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 ) ;
-        http.csrf(AbstractHttpConfigurer::disable);
+       // http.csrf(AbstractHttpConfigurer::disable);
+        //csrf is only for POST/PUT/UPDATE/DELETE
+        // so have a api that will generate an csrf toke when logged in and return the token
+        //the csrf token is 1 per request
+        http.csrf(csrf ->
+                csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+
+                        .ignoringRequestMatchers("/api/auth/public/**") //this is to disable csrf for rg public post requests
+                );
         http.httpBasic(Customizer.withDefaults());
-        http.addFilterBefore(new HeaderValidationFilter(), UsernamePasswordAuthenticationFilter.class);
+        //http.addFilterBefore(new HeaderValidationFilter(), UsernamePasswordAuthenticationFilter.class);
+        //Note: Even if you don't add the filters explicitly still the filters will come in action
+        //as those are @Component.
 
         return http.build();
     }
