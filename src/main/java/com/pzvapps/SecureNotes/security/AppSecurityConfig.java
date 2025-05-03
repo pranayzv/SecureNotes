@@ -6,10 +6,16 @@ import com.pzvapps.SecureNotes.model.Role;
 import com.pzvapps.SecureNotes.model.User;
 import com.pzvapps.SecureNotes.repository.RoleRepository;
 import com.pzvapps.SecureNotes.repository.UserRepository;
+import com.pzvapps.SecureNotes.security.jwt.AuthEntryPointJwt;
+import com.pzvapps.SecureNotes.security.jwt.AuthTokenFilter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -26,12 +32,15 @@ import java.time.LocalDate;
 @EnableWebSecurity
 public class AppSecurityConfig {
 
+    @Autowired
+    AuthEntryPointJwt unauthorizedHandler;
 
     @Bean
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception{
         http.authorizeHttpRequests(
                 request -> request
                         .requestMatchers("/contact").permitAll()
+                        .requestMatchers("/api/auth/public/**").permitAll()
                         .anyRequest().authenticated()
         );
         http.sessionManagement(session  ->
@@ -43,15 +52,28 @@ public class AppSecurityConfig {
         //the csrf token is 1 per request
         http.csrf(csrf ->
                 csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-
                         .ignoringRequestMatchers("/api/auth/public/**") //this is to disable csrf for rg public post requests
                 );
-        http.httpBasic(Customizer.withDefaults());
+       // http.httpBasic(Customizer.withDefaults());
         //http.addFilterBefore(new HeaderValidationFilter(), UsernamePasswordAuthenticationFilter.class);
         //Note: Even if you don't add the filters explicitly still the filters will come in action
         //as those are @Component.
 
+        http.exceptionHandling(ex -> ex.authenticationEntryPoint(unauthorizedHandler));
+
+        http.addFilterBefore(authenticationJWTTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+
+
         return http.build();
+    }
+
+    @Bean
+    public AuthTokenFilter authenticationJWTTokenFilter(){
+        return new AuthTokenFilter();
+    }
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
     }
 
     @Bean
